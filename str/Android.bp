@@ -1,0 +1,22 @@
+/*
+ * COPYRIGHT (C) 2021 MITSUBISHI ELECTRIC CORPORATION
+ * ALL RIGHTS RESERVED
+ */
+
+cc_prebuilt_binary {
+    name: "init.pre_suspend.sh",
+    device_specific: true,
+
+    srcs: ["init.pre_suspend.sh"],
+
+    init_rc: ["str.rc"],
+}
+
+cc_prebuilt_binary {
+    name: "init.post_wakeup.sh",
+    device_specific: true,
+
+    srcs: ["init.post_wakeup.sh"],
+
+    init_rc: ["str.rc"],
+}

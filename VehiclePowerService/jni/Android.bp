@@ -1,0 +1,48 @@
+// COPYRIGHT (C) 2018 MITSUBISHI ELECTRIC CORPORATION
+// ALL RIGHTS RESERVED
+
+cc_library_shared {
+    name: "libvehicle_power_service_jni",
+    product_specific: true,
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+
+    shared_libs: [
+        "libvehiclepwr",
+        "liblogdogcommon",
+    ],
+
+    header_libs: [
+        "jni_headers",
+    ],
+
+    srcs : [
+        "vehiclepwrmgr_jni_log.cpp",
+        "vehicle_power_service_jni.cpp",
+        "vpd_native_adapter_jni.cpp",
+        "vpd_native_receiver_jni.cpp",
+        "nativehelper/JNIHelp.cpp",
+    ],
+}
+
+cc_binary_host {
+    name: "vps_jni_csv_generator",
+
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+
+    shared_libs: [
+        "liblogdogcommon",
+    ],
+
+    srcs: [
+        "vps_jni_csv_generator.cpp",
+        "vehiclepwrmgr_jni_log.cpp",
+    ],
+}

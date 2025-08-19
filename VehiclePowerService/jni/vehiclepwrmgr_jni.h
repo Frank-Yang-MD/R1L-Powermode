@@ -1,0 +1,13 @@
+/*
+ * COPYRIGHT (C) 2018 MITSUBISHI ELECTRIC CORPORATION
+ * ALL RIGHTS RESERVED
+ */
+
+#ifndef VEHICLEPWRMGR_JNI_H
+#define VEHICLEPWRMGR_JNI_H
+
+#include "jni.h"
+
+extern JavaVM* sJvm;
+
+#endif  // VEHICLEPWRMGR_JNI_H

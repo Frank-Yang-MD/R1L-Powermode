@@ -1,0 +1,78 @@
+buildscript {
+    repositories {
+        jcenter()
+        google()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.1.0'
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'idea'
+
+android.signingConfigs['debug'].storeFile = file('../../../../Features/melco_debug.keystore')
+apply from:('../../../../Features/sdk_config.gradle')
+apply from:('../../../../Features/version_config.gradle')
+
+tasks.withType(JavaCompile) {
+    def defaultClassPath
+    doFirst {
+        defaultClassPath = options.bootstrapClasspath
+        def aospFramework = fileTree(
+                include: [
+                        'classes.jar'
+                ],
+                dir: '../../../../../../../out/target/common/obj/JAVA_LIBRARIES/framework_intermediates'
+        )
+        options.bootstrapClasspath = aospFramework + options.bootstrapClasspath
+    }
+    doLast {
+        options.bootstrapClasspath = defaultClassPath
+    }
+}
+
+android {
+    compileSdkVersion unifiedSdkVersion
+    buildToolsVersion unifiedBuildToolsVersion
+
+    defaultConfig {
+       // applicationId "com.mitsubishielectric.ahu.efw.lib.vehiclepwrmgr.vpmtestservice"
+        minSdkVersion unifiedSdkVersion
+        targetSdkVersion unifiedSdkVersion
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+if (JavaVersion.current().isJava8Compatible()) {
+    allprojects {
+        tasks.withType(Javadoc) {
+            options.addStringOption('Xdoclint:none', '-quiet')
+        }
+    }
+}
+
+configurations {
+    extraLibs
+}
+
+dependencies {
+    implementation fileTree(include: [
+            'com.mitsubishielectric.ahu.efw.lib.extendedservicemanager_intermediates/classes.jar',
+            'com.mitsubishielectric.ahu.efw.lib.common_intermediates/classes.jar',
+            'com.mitsubishielectric.ahu.efw.lib.logdogcommonclasslib_intermediates/classes.jar',
+            'com.mitsubishielectric.ahu.efw.lib.cpucomservice_intermediates/classes.jar',
+            'com.mitsubishielectric.ahu.efw.lib.vehicleconfigservice_intermediates/classes.jar',
+            'com.mitsubishielectric.ahu.efw.lib.vehiclepwrmgr_intermediates/classes.jar'
+    ],
+            dir: '../../../../../../../out/target/common/obj/JAVA_LIBRARIES')
+    configurations.implementation.extendsFrom(configurations.extraLibs)
+
+}

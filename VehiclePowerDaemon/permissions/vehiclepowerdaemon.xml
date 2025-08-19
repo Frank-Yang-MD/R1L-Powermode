@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<permissions>
+    <permission name="com.mitsubishielectric.ahu.efw.vehiclepwrmgr.permission.ACCESS_MELCO_DAEMON"
+                protectionLevel="signature">
+        <group gid="vendor_vpd" />
+    </permission>
+</permissions>

@@ -1,0 +1,54 @@
+@startuml
+participant "V-CPU"
+participant Kernel
+participant CpuCom
+participant "Android init"
+participant VPD
+participant LogdogDaemon
+participant "Native services"
+participant VPS
+participant "EFW services"
+participant "APP services"
+participant AndroidPowerManager
+
+' Notify APP services about APP_STOP
+"V-CPU"->VPD : Shutdown/Reboot/Suspend request
+VPD->VPS: AppStop
+VPS->"APP services": onAppStop()
+VPS<-"APP services": stopCompleteApp()
+VPD<-VPS: AppStopCompleteVps
+
+
+' Notify EFW services about APP_STOP
+VPD->VPS: FwStop
+VPS->"EFW services": onAppStop()
+VPS<-"EFW services": stopCompleteEfw()
+VPS->VPD: FwStopCompleteVps
+
+' Notify native services about APP_STOP
+VPD->"Native services": onSystemStateChange(EVpdNotification:AppStop)
+VPD<-"Native services": stopProcessingComplete()
+
+' Waiting for logdog save logs
+note over VPD: wait for 200 msec
+        VPD->LogdogDaemon: isLogSavingComplete()
+        return true
+
+"V-CPU"->VPD: Shutdown cancel request
+"V-CPU"<-VPD: Shutdown cancel accept response
+
+VPD->LogdogDaemon: onSystemStateChange(EVpdNotification:AppStop)
+VPD<-LogdogDaemon: stopProcessingComplete()
+
+VPD->VPS:Request unmount
+VPD<-VPS:Unmount complete
+ref over VPD,"Android init": Unload kernel modules
+
+ref over VPD,"Android init": Load kernel modules
+VPD->VPS:Request mount
+
+ref over "V-CPU",VPD, VPS, "EFW services", "APP services"
+    Notify restart to native and java services
+end ref
+
+@enduml

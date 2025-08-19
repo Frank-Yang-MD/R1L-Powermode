@@ -1,0 +1,77 @@
+@startuml
+participant "V-CPU"
+participant Kernel
+participant CpuCom
+participant "Android init"
+participant VPD
+participant LogdogDaemon
+participant "Native services"
+participant VPS
+participant "EFW services"
+participant "APP services"
+participant AndroidPowerManager
+
+' Notify APP services about APP_STOP
+"V-CPU"->VPD : Shutdown/Reboot/Suspend request
+VPD->VPS: AppStop
+VPS->"APP services": onAppStop()
+VPS<-"APP services": stopCompleteApp()
+VPD<-VPS: AppStopCompleteVps
+
+
+' Notify EFW services about APP_STOP
+VPD->VPS: FwStop
+VPS->"EFW services": onAppStop()
+VPS<-"EFW services": stopCompleteEfw()
+VPS->VPD: FwStopCompleteVps
+
+' Notify native services about APP_STOP
+VPD->"Native services": onSystemStateChange(EVpdNotification:AppStop)
+VPD<-"Native services": stopProcessingComplete()
+
+' Waiting for logdog save logs
+note over VPD: wait for 200 msec
+        VPD->LogdogDaemon: isLogSavingComplete()
+        return true
+
+
+VPD->LogdogDaemon: onSystemStateChange(EVpdNotification:AppStop)
+VPD<-LogdogDaemon: stopProcessingComplete()
+
+VPD->VPS:Request unmount
+VPD<-VPS:Unmount complete
+'ref over VPD,"Android init": Unload kernel modules
+group Unload kernel modules
+    "Android init" <- VPD : propertyGet("vendor.sys.suspend.request")
+    return non empty value
+    "Android init" <- VPD : propertyGet("vendor.sys.wakeup.request")
+    return "0"
+    "Android init"<-VPD: propertySet("vendor.sys.suspend.request","0")
+    "Android init"<-VPD: propertySet("vendor.sys.suspend.request","1")
+
+    "V-CPU"->VPD: Shutdown cancel request
+    "V-CPU"<-VPD: Shutdown cancel accept response
+    loop every 50 msec
+    note over VPD: waits for modules unload
+    "Android init"<-VPD: propertyGet("vendor.sys.suspend.request")
+    alt
+    "Android init"-->VPD:"1"
+    else
+    "Android init"-->VPD:"0"
+    break "vendor.sys.suspend.request" == "0"
+    end
+    end
+    end loop
+end
+
+group Load kernel modules
+    "Android init"<-VPD: propertySet("vendor.sys.wakeup.request","0")
+    "Android init"<-VPD: propertySet("vendor.sys.wakeup.request","1")
+end
+VPD->VPS:Request mount
+
+ref over "V-CPU",VPD, VPS, "EFW services", "APP services"
+    Notify restart to native and java services
+end ref
+
+@enduml

@@ -1,0 +1,30 @@
+@startuml
+participant BootDaemon
+participant VPD
+participant VPS
+participant ISM
+participant HMI
+
+alt
+    BootDaemon->VPD:common::EVpdEvent::handOffResponsibility
+    VPD->VPS:common::EVpdNotifications::HandOffResponsibility
+    VPS->ISM:notifyBootDaemonStatus(EBootDaemonStatus.FINISH, EScreenProgress.BLACK_SCREEN)
+    ISM->HMI:showHMI(FullHMI)
+    HMI->ISM:fullHmiDisplayed()
+else
+    BootDaemon->VPD:common::EVpdEvent::handOffResponsibilityStartupAnimationDisplayed
+    VPD->VPS:common::EVpdNotifications::handOffResponsibilityStartupAnimationDisplayed
+    VPS->ISM:notifyBootDaemonStatus(EBootDaemonStatus.FINISH, EScreenProgress.STARTUP_ANIMATION)
+    ISM->HMI:showHMI(BlackScreen)
+    HMI->ISM:blackScreenDisplayed()
+else
+    BootDaemon->VPD:common::EVpdEvent::handOffResponsibilityStartupAnimationAndDiDisplayed
+    VPD->VPS:common::EVpdNotifications::handOffResponsibilityStartupAnimationAndDiDisplayed
+    VPS->ISM:notifyBootDaemonStatus(EBootDaemonStatus.FINISH, EScreenProgress.DISCLAMER)
+    ISM->HMI:showHMI(FullHMI)
+    HMI->ISM:fullHmiDisplayed()
+end
+VPS->VPD:common::EVpdEVent::EndEarlyHmi
+VPD->BootDaemon:common::EVpdNotification::EndEarlyHmi
+
+@enduml

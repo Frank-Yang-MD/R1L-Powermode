@@ -1,0 +1,28 @@
+// COPYRIGHT (C) 2022 MITSUBISHI ELECTRIC CORPORATION
+// ALL RIGHTS RESERVED
+
+cc_library_shared {
+    name: "libvpsmtestservice_jni",
+    product_specific: true,
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+
+    shared_libs: [
+        "libvehiclepwr",
+        "liblogdogcommon",
+        "liblog",
+    ],
+
+    header_libs: [
+        "jni_headers",
+    ],
+
+    srcs : [
+        "vpsmtestservice_jni.cpp",
+        "vpsmtestservice_native_adapter_jni.cpp",
+        "nativehelper/JNIHelp.cpp",
+    ],
+}

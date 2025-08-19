@@ -1,0 +1,17 @@
+# COPYRIGHT (C) 2018 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+service vendor.vehiclepowerdaemon /odm/bin/vehiclepowerdaemon
+    class main
+    user vendor_vpd
+    group vendor_vpd vendor_cpucom vendor_vcfg wakelock
+    capabilities BLOCK_SUSPEND
+    socket vpd stream 0660 vendor_vpd vendor_vpd
+    disabled
+
+on property:vendor.vcd=running
+    start vendor.vehiclepowerdaemon
+
+on late-fs
+    # Change permission for wakelock ignore control
+    chown vendor_vpd vendor_vpd /sys/power/wake_ignore

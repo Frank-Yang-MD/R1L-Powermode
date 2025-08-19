@@ -1,0 +1,39 @@
+// COPYRIGHT (C) 2022 MITSUBISHI ELECTRIC CORPORATION
+// ALL RIGHTS RESERVED
+
+SERVICE_NAME = "vpsmtestservice"
+
+android_app {
+    name: SERVICE_NAME,
+    product_specific: true,
+    platform_apis: true,
+
+    required: [
+        "com.mitsubishielectric.ahu.efw.lib.vehiclepwrmgr",
+        "com.mitsubishielectric.ahu.efw.lib.extendedservicemanager",
+        "com.mitsubishielectric.ahu.efw.lib.common",
+        "com.mitsubishielectric.ahu.efw.lib.logdogcommonclasslib",
+    ],
+
+    libs: [
+        "com.mitsubishielectric.ahu.efw.lib.vehiclepwrmgr",
+        "com.mitsubishielectric.ahu.efw.lib.extendedservicemanager",
+        "com.mitsubishielectric.ahu.efw.lib.common",
+        "com.mitsubishielectric.ahu.efw.lib.logdogcommonclasslib",
+    ],
+
+    manifest: "app/src/main/AndroidManifest.xml",
+    srcs: ["app/src/**/*.java"],
+
+    jni_libs: ["libvpsmtestservice_jni"],
+
+    resource_dirs: [
+        "app/src/main/res",
+    ],
+
+    optimize: {
+        enabled: false,
+    },
+    certificate: "platform",
+    privileged: true,
+}

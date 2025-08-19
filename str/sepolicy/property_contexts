@@ -1,0 +1,10 @@
+# COPYRIGHT (C) 2021 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+# properties for triggering STR helper scripts
+vendor.sys.wakeup.request           u:object_r:str_trigger_prop:s0
+vendor.sys.suspend.request          u:object_r:str_trigger_prop:s0
+persist.sys.suspend.requested       u:object_r:str_trigger_prop:s0
+
+# properties for storing board pre suspend state
+vendor.init.svc.adbd                u:object_r:str_usb_prop:s0

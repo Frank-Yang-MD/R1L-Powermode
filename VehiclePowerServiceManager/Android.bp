@@ -1,0 +1,30 @@
+// COPYRIGHT (C) 2018 MITSUBISHI ELECTRIC CORPORATION
+// ALL RIGHTS RESERVED
+
+LIB_NAME = "com.mitsubishielectric.ahu.efw.lib.vehiclepwrmgr"
+PERM_NAME = LIB_NAME + "-perm"
+
+java_library {
+    name: LIB_NAME,
+//    product_specific: true,
+    installable: true,
+
+    srcs: [
+        "src/**/*.java",
+        "src/**/I*.aidl",
+    ],
+
+    aidl: {
+        local_include_dirs: ["src/aidl"],
+    },
+
+    required: [PERM_NAME],
+}
+
+prebuilt_etc {
+    name: PERM_NAME,
+//    product_specific: true,
+    src: "permissions/" + LIB_NAME + ".xml",
+    sub_dir: "permissions",
+    filename_from_src: true,
+}

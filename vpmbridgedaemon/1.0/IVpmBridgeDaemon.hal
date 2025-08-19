@@ -1,0 +1,14 @@
+/*
+ * COPYRIGHT (C) 2019 MITSUBISHI ELECTRIC CORPORATION
+ * ALL RIGHTS RESERVED
+ */
+
+package com.mitsubishielectric.ahu.vehiclepwrmgr.vpmbridgedaemon@1.0;
+
+interface IVpmBridgeDaemon {
+    shutdown();
+    suspend();
+    reboot();
+    rebootRecovery();
+    wakeUp();
+};

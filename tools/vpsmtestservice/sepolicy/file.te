@@ -1,0 +1,4 @@
+# COPYRIGHT (C) 2022 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+type vpsmtestservice_app_data, file_type;

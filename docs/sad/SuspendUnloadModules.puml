@@ -1,0 +1,46 @@
+@startuml
+participant "Android init"
+participant VPD
+
+group Unload kernel modules
+    group Waiting for modules load before unload
+        "Android init" <- VPD : propertyGet("vendor.sys.suspend.request")
+        alt "vendor.sys.suspend.request" property value is empty
+            note over VPD: VPD skips modules unload
+        else "vendor.sys.suspend.request" property value is not empty
+            loop every 50 msec
+                "Android init" <- VPD : propertyGet("vendor.sys.wakeup.request")
+                break "vendor.sys.wakeup.request" property value is "0"
+                note over VPD: VPD finish polling property
+                end break
+                break load modules timeout 10 sec occurs
+                note over VPD: VPD outputs log
+                end break
+            end loop
+        end alt
+    end Waiting for modules load before unload
+
+    "Android init"<-VPD: propertySet("vendor.sys.suspend.request","0")
+    "Android init"<-VPD: propertySet("vendor.sys.suspend.request","1")
+    loop every 50 msec
+        "Android init" <- VPD : propertyGet("vendor.sys.suspend.request")
+        break "vendor.sys.suspend.request" property value is "0"
+        note over VPD: VPD finish polling property
+        end break
+        break unload modules timeout 10 sec occurs
+        note over VPD: VPD outputs log
+        end break
+    end loop
+
+    alt if the last request from V-CPU is Shutdown Cancel Request
+        group Start modules loading after receive shutdown cancel reqeust      .
+            "Android init"<-VPD: propertySet("vendor.sys.wakeup.request","0")
+            "Android init"<-VPD: propertySet("vendor.sys.wakeup.request","1")
+        end group
+        ref over VPD: continue shutdown cancel
+    else
+        ref over VPD: continue shutdown
+    end
+end Unload kernel modules
+
+@enduml

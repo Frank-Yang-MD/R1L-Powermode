@@ -1,0 +1,34 @@
+@startuml
+participant "V-CPU"
+participant BootDaemon
+participant VPD
+participant "Android init"
+participant VPS
+
+ref over VPD,"Android init":  VPD starts CpuComDaemon
+ref over VPD,"Android init":  VPD starts native services
+"V-CPU"<-VPD: Start complete notification
+"V-CPU"->VPD: Shutdown request
+note left
+V-CPU sends
+shutdown request
+before coldboot
+is complete
+end note
+note over VPD
+VPD postpones shutdown
+request handling until
+coldboot is finished
+end note
+VPD<-VPS: subscribe
+VPD->VPS: notify AppStartColdboot
+VPD<-VPS: vpsReady
+VPD->BootDaemon: HmiEventVpsReady
+VPD->"Android init":propertySet("vendor.melco.boot_completed","1")
+note over VPD
+VPD starts shutdown
+request handling just
+after finishes coldboot
+end note
+ref over VPD: Shutdown sequence
+@enduml

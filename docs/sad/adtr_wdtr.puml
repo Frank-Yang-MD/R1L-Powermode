@@ -1,0 +1,32 @@
+@startuml
+participant "V-CPU"
+participant VPD
+participant AndroidPowerManager
+== ColdBoot ==
+loop
+  note over VPD: VPD in NormalOperation
+  loop every 9 seconds
+     "V-CPU"<-VPD : WDTR request
+  end
+  "V-CPU"->VPD : Shutdown/Reboot/Suspend request
+  note over VPD: VPD stops sending WDTR, starts sending ADTR and continues shutdown processing
+  loop every 5 seconds
+     "V-CPU"<-VPD : ADTR request
+  end
+  "V-CPU"<-VPD : Shutdown/Reboot/Suspend processing start
+  note over VPD: Just after "Shutdown/Reboot/Suspend processing start" has sent VPD stops sending ADTR
+
+  alt shutdown
+    note over VPD:VPD goes to STR
+    VPD->AndroidPowerManager : goToSleep()
+    note across :HU is in STR and VPD doesn't send either ADTR or WDTR
+    "V-CPU"->VPD : WakeUp
+    note over VPD: VPD resumes from STR and stops sending ADTR requests to V-CPU
+  else shutdown cancel
+    "V-CPU"->VPD : Shutdown/Reboot/Suspend  cancel request
+    "V-CPU"<-VPD : Shutdown/Reboot/Suspend cancel accept
+    note over VPD: VPD handles shutdown cancel request, stops sending ADTR and starts sending WDTR
+  end
+end
+
+@enduml

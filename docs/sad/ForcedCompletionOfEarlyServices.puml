@@ -1,0 +1,12 @@
+@startuml
+participant VPD
+participant BootDaemon
+participant VPS
+participant ISM
+
+ISM->VPS: forcedCompletionEarlyServices
+VPS->VPD: EVpdNotifications::ForcedCompletionEarlyServices
+VPD->BootDaemon: EVpdNotifications::ForcedCompletionEarlyServices
+
+
+@enduml

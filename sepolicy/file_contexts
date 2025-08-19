@@ -1,0 +1,5 @@
+# COPYRIGHT (C) 2018 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+/dev/socket/vpd                             u:object_r:vehiclepowerdaemon_socket:s0
+/(odm|vendor/odm)/bin/vehiclepowerdaemon    u:object_r:vehiclepowerdaemon_exec:s0

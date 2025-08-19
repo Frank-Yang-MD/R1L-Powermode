@@ -1,0 +1,68 @@
+@startuml
+participant "V-CPU"
+participant Kernel
+participant CpuCom
+participant "Android init"
+participant VPD
+participant LogdogDaemon
+participant "Native services"
+participant VPS
+participant "EFW services"
+participant "APP services"
+
+VPD->LogdogDaemon: onSystemStateChange(EVpdNotification:AppRestart)
+VPD->"Native services": onSystemStateChange(EVpdNotification:AppRestart)
+VPD->VPS: onSystemStateChange(EVpdNotification:FwRestart)
+VPS->"EFW services":onAppRestart()
+
+alt
+    VPS<-"EFW services":restartCompleteEfw()
+    VPD<-VPS: fwRestartProcessingComplete()
+else
+    note over VPS
+        One of EFW services doesn't call restartCompleteEfw
+    end note
+    VPD x<[#red]-VPS: fwRestartProcessingComplete()
+    note over VPD
+    VPD detects VPS restart processing complete timeout
+    end note
+    "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+end
+
+VPD->VPS: onSystemStateChange(EVpdNotification:AppRestart)
+VPS->"APP services":onAppRestart()
+
+
+alt
+    VPS<-"APP services":restartCompleteApp()
+    VPD<-VPS: appRestartProcessingComplete()
+else
+    note over VPS
+        One of APP services doesn't call restartCompleteApp
+    end note
+    VPD x<[#red]-VPS: appRestartProcessingComplete()
+    note over VPD
+    VPD detects VPS restart processing complete timeout
+    end note
+    "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+end
+
+opt
+    "V-CPU"->VPD: "Shutdown request"
+    note over VPD
+        VPD keeps the information of shutdown request
+    end note
+end
+
+"V-CPU"<-VPD: Shutdown cancel complete notification
+
+alt "Shutdown request" has been received during notifying restart
+
+    ref over "V-CPU", "APP services"
+        Shutdown sequence
+    end
+else
+    note over VPD: VPD is in NormalOperation state
+end
+
+@enduml

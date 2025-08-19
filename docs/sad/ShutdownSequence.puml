@@ -1,0 +1,195 @@
+@startuml
+participant "V-CPU"
+participant Kernel
+participant CpuCom
+participant "Android init"
+participant VPD
+participant LogdogDaemon
+participant "Native services"
+participant VPS
+participant "EFW services"
+participant "APP services"
+participant VpmBridgeDaemon
+participant AndroidPowerManager
+
+' Notify APP services about APP_STOP
+"V-CPU"->VPD : Shutdown/Reboot/Suspend request
+alt VPS is connected
+    VPD->VPS: AppStop
+    VPS->"APP services": onAppStop()
+
+    VPD->"Android init": propertyGet("vendor.emerg.coldboot")
+    alt value of "vendor.emerg.coldboot" is not empty
+        "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+    end
+
+    alt
+        VPS<-"APP services": stopCompleteApp()
+        VPD<-VPS: AppStopCompleteVps
+    else
+        note over "APP services"
+        APP service
+        doesn't send
+        stop complete
+        end note
+        VPS x<[#red]- "APP services":stopCompleteApp
+        note over VPD
+        VPD detects
+        APP stop
+        complete timeout
+        end note
+        VPD->VPS: TimeOutError
+        "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+        hnote over VPD: wait for 300ms \n(RACSW-1293)
+    end
+else VPS is not connected
+    note over VPD
+      VPD outputs log message with
+      severity ERROR to logdog cyclic
+    end note
+   "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+end
+
+alt VPS is connected
+    ' Notify EFW services about APP_STOP
+    VPD->VPS: FwStop
+    VPS->"EFW services": onAppStop()
+    alt
+        VPS<-"EFW services": stopCompleteEfw()
+        VPS->VPD: FwStopCompleteVps
+    else
+        VPS<-"EFW services": stopCompleteEfw()
+        note over VPS
+            VPS failed to check
+            that the services
+            started from VPS are alive
+        end note
+        VPS->VPD: StopFailedVps
+        "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+    else
+        note over "EFW services"
+        EFW service
+        doesn't send
+        stop complete
+        end note
+        VPS x<[#red]- "EFW services":stopCompleteEfw()
+        note over VPD
+        VPD detects
+        EFW stop
+        complete timeout
+        end note
+        VPD->VPS: TimeOutError
+        note over VPS
+        VPS output to log EFW services
+        that don't send stopCompleteEfw()
+        end note
+        "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+        hnote over VPD: wait for 300ms \n(RACSW-1293)
+    end
+else VPS is not connected
+    note over VPD
+      VPD outputs log message with
+      severity ERROR to logdog cyclic
+    end note
+   "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+end
+
+' Notify native services about APP_STOP
+VPD->"Native services": onSystemStateChange(EVpdNotification:AppStop)
+alt
+    VPD<-"Native services": stopProcessingComplete()
+else
+    note over "Native services"
+    Native service
+    doesn't send
+    stop complete
+    end note
+    VPD x<[#red]-"Native services": stopProcessingComplete()
+    note over VPD
+    VPD detects Native services
+    stop processing complete timeout
+    end note
+    "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+    hnote over VPD
+     --wait for 200 msec (CACSS-9114)--
+     wait for 300 msec (RACSW-1293)
+    end hnote
+end
+
+' Waiting for logdog save logs
+loop every 5 sec during VPOWER_LOG_SAVE_TIMEOUT
+    alt NOT SAVING
+        VPD->LogdogDaemon: isLogSavingComplete()
+        return true
+        break log saving completed
+            note over VPD: finish polling saving state
+        end
+    else SAVING
+        VPD->LogdogDaemon: isLogSavingComplete()
+        return false
+        break log saving timeout
+            "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+            note over VPD: finish polling saving state
+        end
+    end
+end loop
+
+VPD->LogdogDaemon: onSystemStateChange(EVpdNotification:AppStop)
+alt
+    VPD<-LogdogDaemon: stopProcessingComplete()
+else
+    note over "LogdogDaemon"
+    LogdogDaemon
+    doesn't send
+    stop complete
+    end note
+    VPD x<[#red]-LogdogDaemon: stopProcessingComplete()
+    note over VPD
+    VPD detects LogdogDaemon
+    stop processing complete timeout
+    end note
+    "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+end
+
+alt VPS is connected
+    VPD->VPS: Request unmount
+    alt
+        VPD<-VPS: Unmount complete
+    else
+        note over "VPS"
+            VPS doesn't send
+            unmount complete
+        end note
+        VPD x<[#red]-VPS: Unmount complete
+        note over VPD
+            VPD detects unmount
+            complete timeout
+        end note
+        "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+    end
+else VPS is not connected
+    note over VPD
+      VPD outputs log message with
+      severity ERROR to logdog cyclic
+    end note
+   "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+end
+
+ref over "Android init", VPD: Unload kernel modules
+CpuCom<-VPD++: Shutdown start notification
+"V-CPU"<-CpuCom: Shutdown start notification
+CpuCom->VPD--:onDeliveryStatus(true)
+alt open "/sys/devices/platform/vcpu-gpio/str_trg_vtm" sucsesfully
+    Kernel<-VPD:read("/sys/devices/platform/vcpu-gpio/str_trg_vtm",1)
+    VPD->AndroidPowerManager: release_wake_lock("VehiclePowerDaemon")
+    Kernel<-VPD : write "1" to "/sys/power/wake_ignore"
+    note right:VPD disables wake locks
+    VPD->VpmBridgeDaemon:suspend() / shutdown() / reboot() / rebootRecovery()
+    VpmBridgeDaemon->AndroidPowerManager:suspend() / shutdown() / reboot() rebootRecovery()
+    Kernel<-VPD:pool("/sys/devices/platform/vcpu-gpio/str_trg_vtm")
+    note right:VPD starts waiting for wake up
+end
+
+ref over "V-CPU",AndroidPowerManager: Resume sequence
+
+@enduml

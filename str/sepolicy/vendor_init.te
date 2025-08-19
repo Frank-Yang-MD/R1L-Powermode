@@ -1,0 +1,5 @@
+# COPYRIGHT (C) 2021 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+get_prop(vendor_init, str_usb_prop);
+set_prop(vendor_init, str_usb_prop);

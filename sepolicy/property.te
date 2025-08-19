@@ -1,0 +1,7 @@
+# COPYRIGHT (C) 2018 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+type vpd_start_prop, property_type;
+type vpd_boot_completed_prop, property_type;
+type vpd_started_prop, property_type;
+type vendor_emerg_coldboot_prop, property_type;

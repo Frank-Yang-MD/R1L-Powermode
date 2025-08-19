@@ -1,0 +1,20 @@
+# COPYRIGHT (C) 2018 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+type vehiclepowerservice_app, domain, melco_service;
+
+app_domain(vehiclepowerservice_app);
+
+# allow to communicate with VPD via unix socket
+unix_socket_connect(vehiclepowerservice_app, vehiclepowerdaemon, vehiclepowerdaemon)
+
+allow vehiclepowerservice_app activity_service:service_manager { find };
+allow vehiclepowerservice_app display_service:service_manager { find };
+allow vehiclepowerservice_app network_management_service:service_manager { find };
+allow vehiclepowerservice_app connectivity_service:service_manager { find };
+allow vehiclepowerservice_app mount_service:service_manager { find };
+
+allow vehiclepowerservice_app vehiclepowerservice_app_data:dir { search  getattr };
+
+# allow to write kpi boot markers
+allow vehiclepowerservice_app debugfs_kpi:file rw_file_perms;

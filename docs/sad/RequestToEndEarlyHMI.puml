@@ -1,0 +1,12 @@
+@startuml
+participant VPD
+participant BootDaemon
+participant VPS
+participant ISM
+
+ISM->VPS: Request to end EarlyHMI
+VPS->VPD: Request to end EarlyHMI
+VPD->BootDaemon: Request to end EarlyHMI
+
+
+@enduml

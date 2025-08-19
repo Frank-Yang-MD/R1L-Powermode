@@ -1,0 +1,18 @@
+# COPYRIGHT (C) 2019 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+type vpmbridgedaemon, domain, coredomain, melco_daemon;
+type vpmbridgedaemon_exec, exec_type, file_type, system_file_type;
+
+init_daemon_domain(vpmbridgedaemon);
+
+# Allow to register service in hwservicemanager
+add_hwservice(vpmbridgedaemon, vpmbridgedaemon_hwservice);
+hwbinder_use(vpmbridgedaemon);
+get_prop(vpmbridgedaemon, hwservicemanager_prop);
+
+# Allow to communicate with Android PowerManager
+binder_use(vpmbridgedaemon);
+binder_call(vpmbridgedaemon, system_server)
+allow vpmbridgedaemon power_service:service_manager { find };
+

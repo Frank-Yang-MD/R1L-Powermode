@@ -1,0 +1,66 @@
+/*
+ * COPYRIGHT (C) 2021 MITSUBISHI ELECTRIC CORPORATION
+ * ALL RIGHTS RESERVED
+ */
+
+DAEMON_NAME = "com.mitsubishielectric.ahu.vehiclepwrmgr.vpmbridgedaemon@1.0-service"
+PERM_NAME = DAEMON_NAME + "-perm"
+
+cc_binary {
+    name: DAEMON_NAME,
+    product_specific: true,
+    defaults: ["hidl_defaults"],
+    include_dirs: [ "frameworks/native/include", ],
+
+    header_libs: [
+        "libhardware_headers",
+    ],
+
+    relative_install_path: "hw",
+
+    srcs: [
+        "src/**/*.cpp",
+    ],
+
+    init_rc: [DAEMON_NAME + ".rc"],
+
+    shared_libs: [
+        "com.mitsubishielectric.ahu.vehiclepwrmgr.vpmbridgedaemon@1.0_vendor",
+        "liblogdogcommon",
+        "libmelcocommon",
+        "libpowermanager",
+        "libbinder",
+        "libhidlbase",
+        "libhwbinder",
+        "libhidltransport",
+        "libcutils",
+        "libutils",
+    ],
+}
+
+prebuilt_etc {
+    name: PERM_NAME,
+    product_specific: true,
+    src: "permissions/" + DAEMON_NAME + ".xml",
+    sub_dir: "permissions",
+    filename_from_src: true,
+}
+
+cc_binary_host {
+    name: "vpmbridgedaemon_csv_generator",
+
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+
+    shared_libs: ["liblogdogcommon"],
+
+    local_include_dirs: ["src"],
+
+    srcs: [
+        "tools/vpmbridgedaemon_csv_generator/csv_generator.cpp",
+        "src/VpmBridgeDaemonLog.cpp",
+    ],
+}

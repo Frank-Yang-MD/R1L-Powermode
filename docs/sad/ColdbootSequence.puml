@@ -1,0 +1,196 @@
+@startuml
+participant "V-CPU"
+participant Kernel
+participant CpuCom
+participant "Android init"
+participant VPD
+box "Native services"
+    participant LogdogDaemon
+    participant VehicleConfigDaemon
+    participant BootDaemon
+    participant EikDaemon
+    participant csxe
+end box
+participant VPS
+participant "Android(Zigote,SystemServer,etc.)"
+participant AndroidPowerManager
+participant ESM
+participant VehicleConfigService
+participant "Normal EFW services"
+participant "Late EFW services"
+participant "Normal APP services"
+participant "Late APP services"
+participant ISM
+participant HMI
+
+create LogdogDaemon
+"Android init"->LogdogDaemon:starts
+
+create VehicleConfigDaemon
+"Android init"->VehicleConfigDaemon:starts
+VehicleConfigDaemon->"Android init":propertySet("vendor.vcd","running")
+
+create VPD
+"Android init"->VPD:starts
+Kernel<-VPD:open("/sys/devices/platform/vcpu-gpio/str_trg_vtm")
+
+LogdogDaemon->VPD:subscribe(listener)
+
+VPD->VehicleConfigDaemon:getInt("VPOWER_APPSTOP_JAVA_TIMEOUT"};
+VPD->VehicleConfigDaemon:getInt("VPOWER_APPSTOP_LOGDOG_TIMEOUT"};
+VPD->VehicleConfigDaemon:getInt("VPOWER_APPSTOP_NATIVE_TIMEOUT"};
+VPD->VehicleConfigDaemon:getInt("VPOWER_APPRESUME_EFW_TIMEOUT"};
+VPD->VehicleConfigDaemon:getInt("VPOWER_APPRESUME_APP_TIMEOUT"};
+VPD->VehicleConfigDaemon:getInt("VPOWER_LOGSAVE_TIMEOUT"};
+
+VPD->"Android init": propertyGet("vendor.vpd_started")
+alt vendor.vpd_started == "1"
+    VPD->CpuCom: subscribe(7102h, listener)
+    note right: VPD subscribes on "Shutdown request"
+    VPD->CpuCom: subscribe(7105h, listener)
+    note right: VPD subscribes on "Shutdown cancesl request"
+else vendor.vpd_started != "1"
+    VPD->"AndroidPowerManager": acquire_wake_lock(PARTIAL_WAKE_LOCK, "VehiclePowerDaemon");
+    VPD->"Android init": propertySet("vendor.cpucomdaemon","start")
+    create CpuCom
+    "Android init"->CpuCom: starts
+    CpuCom->VPD: startComplete
+
+    VPD->CpuCom: subscribe(7102h, listener)
+    note right: VPD subscribes on "Shutdown request"
+    VPD->CpuCom: subscribe(7105h, listener)
+    note right: VPD subscribes on "Shutdown cancesl request"
+
+    VPD->VehicleConfigDaemon:getString("VPM.NATIVE_SERVICES_INIT_CONFIG"};
+    note right VPD
+    Config example:
+        **vendor.vpstart: bootdaemon extinputkeydaemon**
+        **vendor.svc_csxe: svc_csxe : PROXI_SDARS_PRESENCE.byte == 1**
+    end note
+    note over VPD: VPD unconditionally starts BootDaemon and EikDaemon
+    VPD->"Android init": propertySet("vendor.vpstart","start")
+    create BootDaemon
+    "Android init"->BootDaemon: starts
+    create EikDaemon
+    "Android init"->EikDaemon: starts
+
+    loop every 25 ms
+        VPD->"Android init": propertyGet("init.svc.vendor.bootdaemon")
+        VPD->"Android init": propertyGet("init.svc.vendor.extinputkeydaemon")
+        break init.svc.vendor.bootdaemon=="running" && init.svc.vendor.extinputkeydaemon == "running"
+        end
+    end loop
+
+    note over BootDaemon, EikDaemon
+        Native services
+        can subscribe
+        to VPD at any time
+    end note
+    BootDaemon->VPD: subscribe(listener)
+    VPD->BootDaemon: onSystemStateChange(EVpdNotifications::AppStartNa)
+    EikDaemon->VPD: subscribe(listener)
+    VPD->EikDaemon: onSystemStateChange(EVpdNotifications::AppStartNa)
+
+    VPD->"VehicleConfigDaemon":getByte("PROXI_SDARS_PRESENCE")
+    opt PROXI_SDARS_PRESENCE == 1
+        VPD->"Android init": propertySet("vendor.svc_csxe","start")
+        create csxe
+        "Android init"->csxe: starts
+        loop every 25 ms
+            VPD->"Android init": propertyGet("init.svc.vendor.svc_csxe")
+            break init.svc.vendor.svc_csxe == "running"
+            end
+        end loop
+    end
+
+    VPD->CpuCom: "Start complete notification"
+
+    VPD->BootDaemon: onSystemStateChange(EVpdNotifications::AppStartColdboot)
+    VPD->EikDaemon: onSystmeStateChange(EVpdNotifications::AppStartColdboot)
+
+    create VPS
+    "Android(Zigote,SystemServer,etc.)"->VPS:ACTION_BOOT_COMPLETE
+    VPS->"Android(Zigote,SystemServer,etc.)":bindService("ESM")
+
+    create ESM
+    "Android(Zigote,SystemServer,etc.)"->ESM:creates
+    VPS->"Android(Zigote,SystemServer,etc.)":startService("ESM")
+    VPS->ESM:addService("VPS",vpsBinder)
+    VPD<-VPS:subscribeVps(listener)
+    VPD->VPS:onSystemStateChange(EVpdNotification::AppStartColdboot)
+
+    VPS->"Android(Zigote,SystemServer,etc.)":startService("VehicleConfigService")
+    create VehicleConfigService
+    "Android(Zigote,SystemServer,etc.)"->VehicleConfigService:creates
+    loop every 50 msec
+        VPS->ESM:getService("VehicleConfigService")
+        alt VehicleConfigService is not registered in ESM
+            return null
+        else VehicleConfigService is registered in ESM
+            VehicleConfigService->ESM:addService("VehicleConfigService",vcBinder)
+            ESM-->VPS:vcBinder
+            break getService("VehicleConfigService") returns not null value
+            end
+        end
+    end loop
+
+    VPS->"VehicleConfigService":getString("VPM.NORMAL_EFW_SERVICES_START_CONFIG");
+    VPS->"VehicleConfigService":getString("VPM.LATE_EFW_SERVICES_START_CONFIG");
+    VPS->"VehicleConfigService":getString("VPM.NORMAL_APP_SERVICES_START_CONFIG");
+    VPS->"VehicleConfigService":getString("VPM.LATE_APP_SERVICES_START_CONFIG");
+    alt failed to read "VPM.LATE_APP_SERVICES_START_CONFIG" from  "VehicleConfigService"
+        note left
+            if VPS can't read "VPM.LATE_APP_SERVICES_START_CONFIG"
+            from "VehicleConfigService",
+            VPS uses "VPM.JAVA_DIAG_START_CONFIG" instead
+        end note
+        VPS->"VehicleConfigService":getString("VPM.JAVA_DIAG_START_CONFIG");
+    end
+
+    ref over VPS,"Normal APP services" : VPS starts Normal EFW and APP java services
+    ISM->VPS: ismReady(listener)
+
+    VPS->HMI:com.mitsubishielectric.ahu.efw.vehiclepwrmgr.action.SHOW_HMI
+    VPD<-VPS:common::EVpdEvent::VpsReady
+    VPD->BootDaemon:common::EVpdNotifications::HmiEventVpsIsReady
+
+    alt
+        BootDaemon->VPD:common::EVpdEvent::handOffResponsibility
+        VPD->VPS:common::EVpdNotifications::HandOffResponsibility
+        VPS->ISM:notifyBootDaemonStatus(EBootDaemonStatus.FINISH, EScreenProgress.BLACK_SCREEN)
+        ISM->HMI:showHMI(FullHMI)
+        HMI->ISM:fullHmiDisplayed()
+    else
+        BootDaemon->VPD:common::EVpdEvent::handOffResponsibilityStartupAnimationDisplayed
+        VPD->VPS:common::EVpdNotifications::handOffResponsibilityStartupAnimationDisplayed
+        VPS->ISM:notifyBootDaemonStatus(EBootDaemonStatus.FINISH, EScreenProgress.STARTUP_ANIMATION)
+        ISM->HMI:showHMI(BlackScreen)
+        HMI->ISM:blackScreenDisplayed()
+    else
+        BootDaemon->VPD:common::EVpdEvent::handOffResponsibilityStartupAnimationAndDiDisplayed
+        VPD->VPS:common::EVpdNotifications::handOffResponsibilityStartupAnimationAndDiDisplayed
+        VPS->ISM:notifyBootDaemonStatus(EBootDaemonStatus.FINISH, EScreenProgress.DISCLAMER)
+        ISM->HMI:showHMI(FullHMI)
+        HMI->ISM:fullHmiDisplayed()
+    end
+    VPS->VPD:common::EVpdEVent::EndEarlyHmi
+    VPD->BootDaemon:common::EVpdNotification::EndEarlyHmi
+
+    ref over VPS,"Late APP services" : VPS starts Late EFW and APP java services
+
+    alt
+        VPD<-VPS:startProcessingComplete()
+        "V-CPU"<-VPD:Main start complete notification
+        VPD->"Android init":propertySet("vendor.melco.boot_completed","1")
+        VPD->"Android init": propertySet("vendor.vpd_started","1")
+        note over VPD: VPD in NormalOperation
+        loop every 9 seconds
+            "V-CPU"<-VPD : WDTR request
+        end loop
+    else
+        VPD<-VPS:startProcessingFailed()
+        "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+    end
+end
+
+@enduml

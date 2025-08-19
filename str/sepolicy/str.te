@@ -1,0 +1,43 @@
+# COPYRIGHT (C) 2021 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+type str_init_shell, domain;
+
+init_daemon_domain(str_init_shell);
+
+# pre-suspend scripts aqcuires wakelock during its excecution
+wakelock_use(str_init_shell);
+
+# to set mode of use to "none" before suspend and restore after wakeup
+allow str_init_shell sysfs_usb_mode:file rw_file_perms;
+allow str_init_shell sysfs_usb_mode_lock:file rw_file_perms;
+
+# to write logs to dmesg
+allow str_init_shell kmsg_device:chr_file w_file_perms;
+
+# to read /sys/bus/usb/devices/
+allow str_init_shell sysfs:dir r_dir_perms;
+
+# for lsusb and enabling logging of interrupts
+allow str_init_shell sysfs:file rw_file_perms;
+
+# allow to execute vendor shell stuff without domain transition
+allow str_init_shell { vendor_toolbox_exec vendor_shell_exec }:file execute_no_trans;
+
+# for timeout command
+allow str_init_shell self:capability { kill };
+
+# to remove and insert emac_dwc_eqos module
+allow str_init_shell vendor_file:system module_load;
+allow str_init_shell self:capability sys_module;
+
+# to write /proc/sys/vm/compact_memory
+allow str_init_shell proc:file {open write};
+
+get_prop(str_init_shell, str_usb_prop);
+set_prop(str_init_shell, str_usb_prop);
+
+set_prop(str_init_shell, vendor_usb_prop);
+get_prop(str_init_shell, vendor_usb_prop);
+
+set_prop(str_init_shell, str_trigger_prop);

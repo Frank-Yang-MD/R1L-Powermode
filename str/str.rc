@@ -1,0 +1,23 @@
+# COPYRIGHT (C) 2021 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+on property:vendor.sys.suspend.request=1
+    start vendor.pre-suspend
+
+on property:vendor.sys.wakeup.request=1
+    start vendor.post-resume
+
+service vendor.pre-suspend /odm/bin/init.pre_suspend.sh
+    user root
+    group root wakelock
+    oneshot
+    disabled
+
+service vendor.post-resume /odm/bin/init.post_wakeup.sh
+    user root
+    group root wakelock
+    oneshot
+    disabled
+
+on property:init.svc.adbd=*
+    setprop vendor.init.svc.adbd ${init.svc.adbd}

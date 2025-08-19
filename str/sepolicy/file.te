@@ -1,0 +1,4 @@
+# COPYRIGHT (C) 2021 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+type str_init_shell_exec, file_type, exec_type, vendor_file_type;

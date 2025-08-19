@@ -1,0 +1,13 @@
+sonarqube {
+    properties {
+        property 'sonar.projectKey', 'VPS'
+        property 'sonar.branch.name', 'q-r1lr'
+        property 'sonar.projectName', 'Vehicle Power Service'
+        property 'sonar.host.url', 'https://sonar.mea-dev.net'
+        property 'sonar.coverage.jacoco.xmlReportPaths', './build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml'
+        property 'sonar.junit.reportPaths', './build/test-results/testDebugUnitTest'
+        property 'sonar.buildbreaker.skip', 'False'
+        property "sonar.coverage.exclusions", './src/java/com/mitsubishielectric/ahu/efw/vehiclepwrmgr/VehiclePowerService/VPSLogMsg.java'
+    }
+}
+project.tasks['sonarqube'].dependsOn 'jacocoTestReport'

@@ -1,0 +1,11 @@
+<manifest version="1.0" type="device">
+    <hal format="hidl">
+        <name>com.mitsubishielectric.ahu.vehiclepwrmgr.vpmbridgedaemon</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IVpmBridgeDaemon</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+</manifest>

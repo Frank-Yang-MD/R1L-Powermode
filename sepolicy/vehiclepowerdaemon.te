@@ -1,0 +1,52 @@
+# COPYRIGHT (C) 2018 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+type vehiclepowerdaemon, domain, melco_daemon;
+
+typeattribute system_server system_writes_vendor_properties_violators;
+
+init_daemon_domain(vehiclepowerdaemon);
+
+# allow to access flock file
+allow vehiclepowerdaemon vehiclepowerdaemon_data:file create_file_perms;
+allow vehiclepowerdaemon vehiclepowerdaemon_data:dir rw_dir_perms;
+
+# allow connect to cpucomdaemon socket and write to it
+unix_socket_connect(vehiclepowerdaemon, cpucomdaemon, cpucomdaemon)
+
+# allow to use VehicleConfig
+use_vehicleconfig(vehiclepowerdaemon);
+
+# allow to use HwBinder access to access vpmbd and logdogd
+hwbinder_use(vehiclepowerdaemon)
+set_prop(vehiclepowerdaemon, hwservicemanager_prop)
+get_prop(vehiclepowerdaemon, hwservicemanager_prop)
+
+# allow to communicate with VpmBridgeDaemon (proxy to Android PM)
+binder_call(vehiclepowerdaemon, vpmbridgedaemon);
+allow vehiclepowerdaemon vpmbridgedaemon_hwservice:hwservice_manager { find };
+
+# allow to communicate with Logdog
+binder_call(vehiclepowerdaemon, logdogd);
+allow vehiclepowerdaemon logdogd_hwservice:hwservice_manager { find };
+
+# allow to read str_trg_vtm syfs node
+allow vehiclepowerdaemon sysfs:file rw_file_perms;
+
+set_prop(vehiclepowerdaemon, svc_csxe_prop)
+set_prop(vehiclepowerdaemon, vpd_start_prop)
+set_prop(vehiclepowerdaemon, vpd_boot_completed_prop)
+
+set_prop(vehiclepowerdaemon, str_trigger_prop)
+get_prop(vehiclepowerdaemon, str_trigger_prop)
+
+set_prop(vehiclepowerdaemon, vpd_started_prop)
+get_prop(vehiclepowerdaemon, vpd_started_prop)
+
+get_prop(vehiclepowerdaemon, vendor_emerg_coldboot_prop)
+set_prop(system_server, vendor_emerg_coldboot_prop)
+set_prop(vendor_init, vendor_emerg_coldboot_prop)
+
+get_prop(vehiclepowerdaemon, vendor_default_prop)
+
+wakelock_use(vehiclepowerdaemon);

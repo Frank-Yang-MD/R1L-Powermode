@@ -1,0 +1,5 @@
+# COPYRIGHT (C) 2021 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+/(odm|vendor/odm)/bin/init\.post_wakeup\.sh     u:object_r:str_init_shell_exec:s0
+/(odm|vendor/odm)/bin/init\.pre_suspend\.sh     u:object_r:str_init_shell_exec:s0

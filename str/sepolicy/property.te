@@ -1,0 +1,5 @@
+# COPYRIGHT (C) 2021 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+type str_trigger_prop, property_type;
+type str_usb_prop, property_type;

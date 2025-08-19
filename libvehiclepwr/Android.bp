@@ -1,0 +1,135 @@
+// COPYRIGHT (C) 2019 MITSUBISHI ELECTRIC CORPORATION
+// ALL RIGHTS RESERVED
+
+cc_library_shared {
+    name: "libvehiclepwr",
+    product_specific: true,
+    vendor_available: true,
+    host_supported: true,
+
+    cflags: [
+        "-Wall",
+        "-Werror"
+    ],
+
+    shared_libs: [
+        "libc++",
+        "libcutils",
+        "liblog",
+        "libmelcocommon",
+        "liblogdogcommon",
+    ],
+
+    header_libs: [
+        "libvpmcommon",
+    ],
+
+    local_include_dirs: [
+        "include",
+        "src",
+        "src/BootDaemon",
+        "src/Client",
+        "src/CpuCom",
+        "src/EventHandling",
+        "src/Log",
+        "src/Logdog",
+        "src/NativeClient",
+        "src/Vps",
+        "src/Messenger",
+    ],
+
+    srcs : [
+        "src/**/*.cpp",
+    ],
+
+    export_include_dirs: ["include"],
+    export_header_lib_headers: ["libvpmcommon"],
+}
+
+cc_defaults {
+    name: "libvehiclepwr_tests_defaults",
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-DHOST",
+    ],
+
+    static_libs: [
+        "libgtest",
+        "libgmock",
+    ],
+
+    shared_libs: [
+        "libc++",
+        "libcutils",
+        "liblog",
+        "libmelcocommon",
+        "liblogdogcommon",
+    ],
+
+    header_libs: [
+        "libvpmcommon",
+    ],
+
+    local_include_dirs: [
+        "include",
+        "src",
+        "test",
+        "src/BootDaemon",
+        "src/Client",
+        "src/CpuCom",
+        "src/EventHandling",
+        "src/Log",
+        "src/Logdog",
+        "src/NativeClient",
+        "src/Vps",
+        "src/Messenger",
+    ],
+
+    srcs : [
+        "src/**/*.cpp",
+        "test/**/*.cpp",
+    ],
+}
+
+cc_test_host {
+//    enabled: false,
+    name: "libvehiclepwr_tests",
+    defaults: ["libvehiclepwr_tests_defaults"],
+}
+
+cc_test_host {
+//    enabled: false,
+    name: "libvehiclepwr_tests_coverage",
+    defaults: ["libvehiclepwr_tests_defaults"],
+    cflags: ["-fprofile-arcs", "-ftest-coverage", "-g", "-O0"],
+    ldflags: ["-coverage"],
+    static_libs: ["libprofile_rt"],
+}
+
+
+cc_binary_host {
+    name: "libvehiclepwr_csv_generator",
+
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-DHOST",
+    ],
+
+    shared_libs: [
+        "liblogdogcommon",
+    ],
+
+    local_include_dirs: [
+        "src",
+        "include"
+    ],
+
+    srcs: [
+        "tools/VplCsvGenerator/csv_generator.cpp",
+        "src/Log/LibVehiclePwrLog.cpp",
+    ],
+}

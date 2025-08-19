@@ -1,0 +1,31 @@
+/*
+ * COPYRIGHT (C) 2019 MITSUBISHI ELECTRIC CORPORATION
+ * ALL RIGHTS RESERVED
+ */
+
+#ifndef COM_MITSUBISHIELECTRIC_AHU_VEHICLEPWRMGR_IMPL_IVCPURESETTIMER_H_
+#define COM_MITSUBISHIELECTRIC_AHU_VEHICLEPWRMGR_IMPL_IVCPURESETTIMER_H_
+
+namespace com {
+namespace mitsubishielectric {
+namespace ahu {
+namespace vehiclepwrmgr {
+namespace impl {
+
+class IVcpuResetTimer {
+public:
+    // LCOV_EXCL_START
+    virtual ~IVcpuResetTimer() = default;
+    // LCOV_EXCL_STOP
+
+    virtual void start() = 0;
+    virtual void onTimeout() = 0;
+};
+
+}  // namespace impl
+}  // namespace vehiclepwrmgr
+}  // namespace ahu
+}  // namespace mitsubishielectric
+}  // namespace com
+
+#endif  // COM_MITSUBISHIELECTRIC_AHU_VEHICLEPWRMGR_IMPL_IVCPURESETTIMER_H_

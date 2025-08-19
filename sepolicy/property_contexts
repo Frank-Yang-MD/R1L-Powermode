@@ -1,0 +1,9 @@
+# COPYRIGHT (C) 2018 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+# properties are used for starting native services by vpd
+vendor.cpucomdaemon             u:object_r:vpd_start_prop:s0
+vendor.vpstart                  u:object_r:vpd_start_prop:s0
+vendor.melco.boot_completed     u:object_r:vpd_boot_completed_prop:s0
+vendor.vpd_started              u:object_r:vpd_started_prop:s0
+vendor.emerg.coldboot           u:object_r:vendor_emerg_coldboot_prop:s0

@@ -1,0 +1,1 @@
+$ANDROID_HOST_OUT/bin/vps_jni_csv_generator

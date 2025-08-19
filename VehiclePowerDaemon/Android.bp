@@ -1,0 +1,221 @@
+// COPYRIGHT (C) 2018 MITSUBISHI ELECTRIC CORPORATION
+// ALL RIGHTS RESERVED
+
+DAEMON_NAME = "vehiclepowerdaemon"
+PERM_NAME = DAEMON_NAME + "-perm"
+
+cc_defaults {
+    name: DAEMON_NAME + "_defaults",
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+
+    shared_libs: [
+        "libutils",
+        "libcutils",
+        "libmelcocommonnet",
+        "liblogdogcommon",
+        "libcpucomv2",
+    ],
+
+    header_libs: [
+        "libvpmcommon",
+    ],
+
+    local_include_dirs: [
+        "src/LogDaemonActions",
+        "src/VcpuInteraction",
+        "src/EventQueue",
+        "src/StateMachine",
+        "src/States",
+        "src/SubscriptionManager",
+        "src/NativeRunner",
+        "src/WakeUpEventDetector",
+        "src/ClientsInteraction",
+        "src/ShutdownManager",
+        "src/TimeoutNotification",
+        "src/EventTransport",
+        "src/EventHandling",
+        "src/VConfigProvider",
+        "src/StateHolder",
+        "src/ModulesControl",
+        "src",
+    ],
+}
+
+cc_binary {
+    name: DAEMON_NAME,
+    defaults: [DAEMON_NAME + "_defaults"],
+    device_specific: true,
+    init_rc: [DAEMON_NAME + ".rc"],
+    required: [PERM_NAME],
+
+    shared_libs: [
+        "libvehicleconfig",
+        "libpower",
+        "libhidlbase",
+        "mitsubishielectric.ahu.logdogd@1.0",
+        "com.mitsubishielectric.ahu.vehiclepwrmgr.vpmbridgedaemon@1.0_vendor"
+    ],
+
+    srcs: [
+        "src/**/*.cpp"
+    ],
+}
+
+cc_test_host {
+//    enabled: false,
+    name: "vehiclepowerdaemon_integration_tests",
+    defaults: [DAEMON_NAME + "_defaults"],
+
+    srcs: [
+        "integration_test/**/*.cpp",
+        "src/**/*.cpp"
+    ],
+
+    local_include_dirs: [
+        "integration_test",
+        "integration_test/mocks",
+        "test/WakeUpEventDetector",
+        "test/ShutdownManager",
+    ],
+
+    static_libs: [
+        "libgtest",
+        "libgmock",
+    ],
+
+    exclude_srcs: [
+        "src/main.cpp",
+        "src/LogDaemonActions/LogDaemonActions.cpp",
+        "src/NativeRunner/AndroidInit.cpp",
+        "src/ShutdownManager/VpmBridgeDaemonAdapter.cpp",
+        "src/ShutdownManager/WakeLockManager.cpp",
+        "src/VConfigProvider/ConfigReader.cpp",
+    ]
+}
+
+prebuilt_etc {
+    name: PERM_NAME,
+//    device_specific: true,
+    src: "permissions/" + DAEMON_NAME + ".xml",
+    sub_dir: "permissions",
+    filename_from_src: true,
+}
+
+cc_defaults {
+    name: "vehiclepowerdaemon_tests_defaults",
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+
+    static_libs: [
+        "libgtest",
+        "libgmock",
+    ],
+
+    shared_libs: [
+        "libcutils",
+        "libmelcocommonnet",
+        "liblogdogcommon",
+        "libcpucom",
+        "libvehicleconfig",
+    ],
+
+    header_libs: [
+        "libvpmcommon",
+    ],
+
+    local_include_dirs: [
+        "src/LogDaemonActions",
+        "src/VcpuInteraction",
+        "src/EventQueue",
+        "src/StateMachine",
+        "src/States",
+        "src/SubscriptionManager",
+        "src/NativeRunner",
+        "src/ClientsInteraction",
+        "src/ShutdownManager",
+        "src/TimeoutNotification",
+        "src/EventTransport",
+        "src/EventHandling",
+        "src/VConfigProvider",
+        "src/StateHolder",
+        "src",
+        "test/ClientInteraction",
+        "test/EventHandling",
+        "test/VcpuInteraction",
+        "test/EventTransport",
+        "test/States",
+        "test/VConfigProvider",
+        "test/TimeoutNotification",
+        "test/StateHolder",
+        "test/ShutdownManager",
+        "test/ModulesControl",
+        "test/NativeRunner",
+        "test/StateMachine",
+        "src/WakeUpEventDetector",
+        "src/ModulesControl",
+        "test/WakeUpEventDetector",
+        "test/EventQueue",
+        "test/SubscriptionManager",
+    ],
+
+    srcs: [
+        "test/**/*.cpp",
+        "src/**/*.cpp"
+    ],
+
+    exclude_srcs: [
+        "src/main.cpp",
+        "src/VehiclePowerDaemon.cpp",
+        "src/NativeRunner/AndroidInit.cpp",
+        "src/NativeRunner/NativeRunnerHolder.cpp",
+        "src/LogDaemonActions/LogDaemonActions.cpp",
+        "src/ShutdownManager/WakeLockManager.cpp",
+        "src/ShutdownManager/VpmBridgeDaemonAdapter.cpp",
+    ],
+}
+
+cc_test_host {
+//    enabled: false,
+    name: "vehiclepowerdaemon_tests",
+    defaults: ["vehiclepowerdaemon_tests_defaults"]
+}
+
+cc_test_host {
+//    enabled: false,
+    name: "vehiclepowerdaemon_tests_coverage",
+    defaults: ["vehiclepowerdaemon_tests_defaults"],
+    cflags: ["-fprofile-arcs", "-ftest-coverage", "-g", "-O0"],
+    ldflags: ["-coverage"],
+    static_libs: ["libprofile_rt"],
+}
+
+cc_binary_host {
+    name: "vehiclepowerdaemon_csv_generator",
+
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-fexceptions",
+    ],
+
+    shared_libs: [
+        "liblogdogcommon",
+    ],
+
+    local_include_dirs: [
+        "src",
+    ],
+
+    srcs: [
+        "tools/csv_generator.cpp",
+        "src/VehiclePowerDaemonLog.cpp",
+    ],
+}

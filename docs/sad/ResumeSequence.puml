@@ -1,0 +1,78 @@
+@startuml
+participant "V-CPU"
+participant Kernel
+participant CpuCom
+participant "Android init"
+participant VPD
+participant LogdogDaemon
+participant "Native services"
+participant VPS
+participant "EFW services"
+participant "APP services"
+participant VpmBridgeDaemon
+participant AndroidPowerManager
+
+par
+Kernel<-VPD:pool("/sys/devices/platform/vcpu-gpio/str_trg_vtm")
+note over VPD: VPD waits for WakeUp event in a separate thread
+
+"V-CPU"->Kernel : Wake up
+Kernel-->VPD
+note over VPD: VPD detects wake up
+end
+group Acquire wakelocks
+    VPD->Kernel:write("/sys/power/wake_ignore","0")
+    note right: Enable wakelocks
+    VPD->AndroidPowerManager:acquire_wake_lock(PARTIAL_WAKE_LOCK,"VehiclePowerDaemon")
+end group
+
+loop
+    CpuCom<-VPD:send("Start complete notification")
+    "V-CPU"<-CpuCom:Start complete notification
+    CpuCom->VPD:onDeliveryStatus(status)
+    break status == true
+    end
+end loop
+
+group load kernel modules
+    VPD->"Android init":propertySet("vendor.sys.wakeup.request","0")
+    VPD->"Android init":propertySet("vendor.sys.wakeup.request","1")
+end group
+VPD->VpmBridgeDaemon:wakeUp()
+VpmBridgeDaemon->AndroidPowerManager:wakeUp()
+
+VPD->LogdogDaemon:onSystemStateChange(EVpdNotifications::AppResume)
+VPD->"Native services":onSystemStateChange(EVpdNotifications::AppResume)
+VPD->VPS:onSystemStateChange(EVpdNotifications::FwResume)
+VPS->"EFW services":onAppResume()
+alt
+    VPS<-"EFW services":resumeCompleteEfw()
+    VPD<-VPS:FwResumeCompleteVps()
+else resume complete timeout occurs
+    VPS x-[#red]"EFW services":resumeCompleteEfw()
+    VPD->VPS: TimeOutError
+    "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+end
+
+VPD->VPS:onSystemStateChange(EVpdNotifications::AppResume)
+VPS->"APP services":onAppResume()
+"V-CPU"<-VPD:Main start complete notification
+alt
+    VPS<-"APP services":resumeCompleteApp()
+    VPD<-VPS:AppResumeCompleteVps()
+else
+    VPS x-[#red] "APP services":resumeCompleteApp()
+    VPD->VPS: TimeOutError
+    "V-CPU"<-VPD: Main status change notification(Self reboot = true)
+end
+
+alt No notification is received from V-CPU since wake up or the last received notification from V-CPU is "Shutdown cancel request"
+    VPD->"Android init": propertySet("vendor.vpd_started","1")
+    note over VPD: VPD in NormalOperation state
+else The last received notification from V-CPU is "Shutdown request"
+    ref over "V-CPU", AndroidPowerManager
+        "Shutdown sequence"
+    end
+end
+
+@enduml

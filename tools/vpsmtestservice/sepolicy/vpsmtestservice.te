@@ -1,0 +1,11 @@
+# COPYRIGHT (C) 2022 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+type vpsmtestservice_app, domain, melco_service;
+
+app_domain(vpsmtestservice_app);
+
+unix_socket_connect(vpsmtestservice_app, vehiclepowerdaemon, vehiclepowerdaemon)
+
+allow vpsmtestservice_app vpsmtestservice_app_data:dir { search  getattr };
+allow vpsmtestservice_app activity_service:service_manager find;

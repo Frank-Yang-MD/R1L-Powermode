@@ -1,0 +1,7 @@
+# COPYRIGHT (C) 2021 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+service vpmbridgedaemon /system/product/bin/hw/com.mitsubishielectric.ahu.vehiclepwrmgr.vpmbridgedaemon@1.0-service
+    class hal
+    user vendor_vpmbd
+    group vendor_vpmbd

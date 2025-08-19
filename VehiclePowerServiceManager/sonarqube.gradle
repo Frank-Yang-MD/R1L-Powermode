@@ -1,0 +1,12 @@
+sonarqube {
+    properties {
+        property 'sonar.projectKey', 'VehiclePowerServiceManager'
+        property 'sonar.branch.name', 'q-r1lr'
+        property 'sonar.projectName', 'VehiclePowerServiceManager'
+        property 'sonar.host.url', 'https://sonar.mea-dev.net'
+        property 'sonar.coverage.jacoco.xmlReportPaths', './build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml'
+        property 'sonar.junit.reportPaths', './build/test-results/testDebugUnitTest'
+        property 'sonar.buildbreaker.skip', 'False'
+    }
+}
+project.tasks['sonarqube'].dependsOn 'jacocoTestReport'

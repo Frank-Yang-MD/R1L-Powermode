@@ -1,0 +1,5 @@
+# COPYRIGHT (C) 2019 MITSUBISHI ELECTRIC CORPORATION
+# ALL RIGHTS RESERVED
+
+/system/product/bin/hw/com.mitsubishielectric.ahu.vehiclepwrmgr.vpmbridgedaemon@1.0-service u:object_r:vpmbridgedaemon_exec:s0
+
